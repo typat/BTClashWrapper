@@ -5,7 +5,7 @@ package com.btilm305.clashapi.exception;
  */
 public class UnknownErrorException extends ClashException {
 
-    public UnknownErrorException(String message) {
-        super(message);
-    }
+	public UnknownErrorException(String message) {
+		super(message);
+	}
 }

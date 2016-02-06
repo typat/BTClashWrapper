@@ -5,7 +5,7 @@ package com.btilm305.clashapi.exception;
  */
 public class NotFoundException extends ClashException {
 
-    public NotFoundException(String message) {
-        super(message);
-    }
+	public NotFoundException(String message) {
+		super(message);
+	}
 }

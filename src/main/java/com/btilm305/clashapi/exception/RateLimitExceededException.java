@@ -5,7 +5,7 @@ package com.btilm305.clashapi.exception;
  */
 public class RateLimitExceededException extends ClashException {
 
-    public RateLimitExceededException(String message) {
-        super(message);
-    }
+	public RateLimitExceededException(String message) {
+		super(message);
+	}
 }

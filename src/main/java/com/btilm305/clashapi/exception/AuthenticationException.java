@@ -5,7 +5,7 @@ package com.btilm305.clashapi.exception;
  */
 public class AuthenticationException extends ClashException {
 
-    public AuthenticationException(String message) {
-        super(message);
-    }
+	public AuthenticationException(String message) {
+		super(message);
+	}
 }

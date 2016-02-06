@@ -28,97 +28,16 @@ public class ClashAPIImpl implements ClashAPI {
         this.apiToken = apiToken;
     }
 
-    public Clan requestClan(ClanData clan) throws IOException, ClashException {
-        return requestClan(clan.getTag());
-    }
-
-    public Clan requestClan(String clanTag) throws IOException, ClashException {
-        return new ClanImpl(performAPIRequest("clans/%s", clanTag));
-    }
-
-    public List<ClanMember> requestClanMembers(ClanData clan) throws IOException, ClashException {
-        return requestClanMembers(clan.getTag());
-    }
-
-    public List<ClanMember> requestClanMembers(String clanTag) throws IOException, ClashException {
-        JSONObject response = performAPIRequest("clans/%s/members", clanTag);
-        JSONArray array = response.getJSONArray("items");
-        List<ClanMember> members = new ArrayList<ClanMember>();
-        for (int i = 0; i < array.length(); i++) {
-            members.add(new ClanMemberImpl(array.getJSONObject(i)));
+    private String inputStreamToString(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = in.read(buffer)) > 0) {
+            out.write(buffer, 0, length);
         }
-        return members;
-    }
-
-    public List<ClanLocation> requestLocations() throws IOException, ClashException {
-        JSONObject response = performAPIRequest("locations");
-        JSONArray array = response.getJSONArray("items");
-        List<ClanLocation> locations = new ArrayList<ClanLocation>();
-        for (int i = 0; i < array.length(); i++) {
-            locations.add(new ClanLocationImpl(array.getJSONObject(i)));
-        }
-        return locations;
-    }
-
-    public List<AbbreviatedClan> requestTopClans(ClanLocation location) throws IOException, ClashException {
-        return requestTopClans(location.getId());
-    }
-
-    public List<AbbreviatedClan> requestTopClans(int locationId) throws IOException, ClashException {
-        JSONObject response = performAPIRequest("locations/%s/rankings/clans", locationId + "");
-        JSONArray array = response.getJSONArray("items");
-        List<AbbreviatedClan> clans = new ArrayList<AbbreviatedClan>();
-        for (int i = 0; i < array.length(); i++) {
-            clans.add(new AbbreviatedClanImpl(array.getJSONObject(i)));
-        }
-        return clans;
-    }
-
-    public List<LeaderboardPlayer> requestTopPlayers(ClanLocation location) throws IOException, ClashException {
-        return requestTopPlayers(location.getId());
-    }
-
-    public List<LeaderboardPlayer> requestTopPlayers(int locationId) throws IOException, ClashException {
-        JSONObject response = performAPIRequest("locations/%s/rankings/players", locationId + "");
-        JSONArray array = response.getJSONArray("items");
-        List<LeaderboardPlayer> players = new ArrayList<LeaderboardPlayer>();
-        for (int i = 0; i < array.length(); i++) {
-            players.add(new LeaderboardPlayerImpl(array.getJSONObject(i)));
-        }
-        return players;
-    }
-
-    public List<AbbreviatedClan> searchClans(ClanSearchRequest request) throws IOException, ClashException {
-        HashMap<String, String> params = new HashMap<String, String>();
-        insertIfNotNull(params, "name", request.getName());
-        insertIfNotNull(params, "warFrequency", request.getWarFrequency());
-        insertIfNotNull(params, "minMembers", request.getMinMembers());
-        insertIfNotNull(params, "maxMembers", request.getMaxMembers());
-        insertIfNotNull(params, "minClanPoints", request.getMinClanPoints());
-        insertIfNotNull(params, "minClanLevel", request.getMinClanLevel());
-        insertIfNotNull(params, "limit", request.getLimit());
-        insertIfNotNull(params, "after", request.getAfter());
-        insertIfNotNull(params, "before", request.getBefore());
-
-        StringBuilder paramBuilder = new StringBuilder();
-        for (Map.Entry<String, String> entry : params.entrySet()) {
-            if (paramBuilder.length() == 0) {
-                paramBuilder.append("?");
-            } else {
-                paramBuilder.append("&");
-            }
-            paramBuilder.append(entry.getKey());
-            paramBuilder.append("=");
-            paramBuilder.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
-        }
-
-        JSONObject response = performAPIRequest("clans/" + paramBuilder.toString());
-        JSONArray array = response.getJSONArray("items");
-        List<AbbreviatedClan> clans = new ArrayList<AbbreviatedClan>();
-        for (int i = 0; i < array.length(); i++) {
-            clans.add(new AbbreviatedClanImpl(array.getJSONObject(i)));
-        }
-        return clans;
+        out.close();
+        in.close();
+        return new String(out.toByteArray());
     }
 
     private void insertIfNotNull(Map<String, String> map, String key, Object value) {
@@ -143,7 +62,7 @@ public class ClashAPIImpl implements ClashAPI {
             connection.setRequestProperty("Accept", "application/json");
             connection.setRequestProperty("authorization", "Bearer " + apiToken);
 
-            InputStream input = null;
+            InputStream input;
             int statusCode = connection.getResponseCode();
             if (statusCode >= 200 && statusCode < 400) {
                 input = connection.getInputStream();
@@ -187,15 +106,101 @@ public class ClashAPIImpl implements ClashAPI {
         }
     }
 
-    private String inputStreamToString(InputStream in) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int length;
-        while ((length = in.read(buffer)) > 0) {
-            out.write(buffer, 0, length);
+    public Clan requestClan(ClanData clan) throws IOException, ClashException {
+        return requestClan(clan.getTag());
+    }
+
+    public Clan requestClan(String clanTag) throws IOException, ClashException {
+        return new ClanImpl(performAPIRequest("clans/%s", clanTag));
+    }
+
+    public List<ClanMember> requestClanMembers(ClanData clan) throws IOException, ClashException {
+        return requestClanMembers(clan.getTag());
+    }
+
+    public List<ClanMember> requestClanMembers(String clanTag) throws IOException, ClashException {
+        JSONObject response = performAPIRequest("clans/%s/members", clanTag);
+        assert response != null;
+        JSONArray array = response.getJSONArray("items");
+        List<ClanMember> members = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            members.add(new ClanMemberImpl(array.getJSONObject(i)));
         }
-        out.close();
-        in.close();
-        return new String(out.toByteArray());
+        return members;
+    }
+
+    public List<ClanLocation> requestLocations() throws IOException, ClashException {
+        JSONObject response = performAPIRequest("locations");
+        assert response != null;
+        JSONArray array = response.getJSONArray("items");
+        List<ClanLocation> locations = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            locations.add(new ClanLocationImpl(array.getJSONObject(i)));
+        }
+        return locations;
+    }
+
+    public List<AbbreviatedClan> requestTopClans(ClanLocation location) throws IOException, ClashException {
+        return requestTopClans(location.getId());
+    }
+
+    public List<AbbreviatedClan> requestTopClans(int locationId) throws IOException, ClashException {
+        JSONObject response = performAPIRequest("locations/%s/rankings/clans", locationId + "");
+        assert response != null;
+        JSONArray array = response.getJSONArray("items");
+        List<AbbreviatedClan> clans = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            clans.add(new AbbreviatedClanImpl(array.getJSONObject(i)));
+        }
+        return clans;
+    }
+
+    public List<LeaderboardPlayer> requestTopPlayers(ClanLocation location) throws IOException, ClashException {
+        return requestTopPlayers(location.getId());
+    }
+
+    public List<LeaderboardPlayer> requestTopPlayers(int locationId) throws IOException, ClashException {
+        JSONObject response = performAPIRequest("locations/%s/rankings/players", locationId + "");
+        assert response != null;
+        JSONArray array = response.getJSONArray("items");
+        List<LeaderboardPlayer> players = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            players.add(new LeaderboardPlayerImpl(array.getJSONObject(i)));
+        }
+        return players;
+    }
+
+    public List<AbbreviatedClan> searchClans(ClanSearchRequest request) throws IOException, ClashException {
+        HashMap<String, String> params = new HashMap<>();
+        insertIfNotNull(params, "name", request.getName());
+        insertIfNotNull(params, "warFrequency", request.getWarFrequency());
+        insertIfNotNull(params, "minMembers", request.getMinMembers());
+        insertIfNotNull(params, "maxMembers", request.getMaxMembers());
+        insertIfNotNull(params, "minClanPoints", request.getMinClanPoints());
+        insertIfNotNull(params, "minClanLevel", request.getMinClanLevel());
+        insertIfNotNull(params, "limit", request.getLimit());
+        insertIfNotNull(params, "after", request.getAfter());
+        insertIfNotNull(params, "before", request.getBefore());
+
+        StringBuilder paramBuilder = new StringBuilder();
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            if (paramBuilder.length() == 0) {
+                paramBuilder.append("?");
+            } else {
+                paramBuilder.append("&");
+            }
+            paramBuilder.append(entry.getKey());
+            paramBuilder.append("=");
+            paramBuilder.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+        }
+
+        JSONObject response = performAPIRequest("clans/" + paramBuilder.toString());
+        assert response != null;
+        JSONArray array = response.getJSONArray("items");
+        List<AbbreviatedClan> clans = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            clans.add(new AbbreviatedClanImpl(array.getJSONObject(i)));
+        }
+        return clans;
     }
 }
